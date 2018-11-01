@@ -48,23 +48,72 @@ plot(zb$interval,zb$steps,
 
 ![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
+The 5-minute interval that on average contains the most number of steps is:  
+
+
 ```r
-zb[which.max(zb$steps),]
+zb[which.max(zb$steps),][1]
 ```
 
 ```
-##     interval steps
-## 104      835   206
+##     interval
+## 104      835
 ```
-
 
 ## Imputing missing values
-There are a total of 2304 missing values in the dataset. To impute values to those rows, we will follow a plan of find-match-replace:  
-1. Find a row that needs to be imputed;  
-2. Match the interval of that row to the interval in a data frame with average steps by interval;  
+There are a total of 2304 missing values in the dataset, i.e. NA. To impute values to those rows, we will follow a plan of find-match-replace:  
+1. Find a row that needs to be imputed, e.g. when row\$steps == NA;  
+2. Match the interval of that row to the interval in a data frame with average steps by interval, e.g. zb\$interval == row\$interval;  
 3. Replace the missing value with the average value for that interval  
 
+```r
+for(i in 1:nrow(fb)){
+  if(is.na(fb$steps[i])){
+    fb$steps[i]<-zb$steps[zb$interval==fb$interval[i]]
+  }
+}
+
+nb <- data.frame(fb)
+
+mxx<-mean(nb$steps)
+mdd<-median(nb$steps)
+hist(nb$steps, 
+       main="Total Number of Steps", 
+       xlab="Steps"
+     )
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```r
+wknds<-c("Saturday","Sunday")
+
+nb$weekf<-ifelse(weekdays(as.Date(as.character(nb$date))) %in% wknds, 
+                 'weekend', 
+                 'weekday')
+
+nb$weekf<-factor(nb$weekf)
+
+nbm<-aggregate(nb$steps,list(nb$interval,nb$weekf),mean)
+colnames(nbm)<-c("interval","wday","steps")
+
+require(ggplot2)
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```r
+ggplot(nbm, aes(interval, steps, colour = factor(wday))) +
+  geom_line() + facet_wrap(~ wday, ncol = 2, scales = "free") +
+  guides(colour = "none") +
+  theme() 
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
